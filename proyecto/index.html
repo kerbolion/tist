@@ -1,1 +1,554 @@
-index.html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente con gestión de tareas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="user-info">
+                    <div class="user-avatar">U</div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 14px;">Kevinlr</div>
+                        <div style="font-size: 12px; color: #888;">Gestor de tareas con IA</div>
+                    </div>
+                </div>
+
+                <div class="search-box" style="position: relative; margin-top: 16px;">
+                    <input type="text" class="search-input" placeholder="Buscar tareas..." id="searchInput" style="width: 100%; padding: 8px 12px 8px 36px; border: 1px solid #e1e1e1; border-radius: 6px; font-size: 14px; background-color: #f8f8f8;">
+                    <div class="search-icon" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #888;">🔍</div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-item active" data-view="today" onclick="switchView('today')">
+                        <div class="nav-item-icon">📅</div>
+                        <div class="nav-item-text">Hoy</div>
+                        <div class="nav-item-count" id="todayCount">0</div>
+                    </div>
+                    <div class="nav-item" data-view="upcoming" onclick="switchView('upcoming')">
+                        <div class="nav-item-icon">📆</div>
+                        <div class="nav-item-text">Próximamente</div>
+                        <div class="nav-item-count" id="upcomingCount">0</div>
+                    </div>
+                    <div class="nav-item" data-view="inbox" onclick="switchView('inbox')">
+                        <div class="nav-item-icon">📥</div>
+                        <div class="nav-item-text">Bandeja de entrada</div>
+                        <div class="nav-item-count" id="inboxCount">0</div>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Favoritos</div>
+                    <div class="nav-item" data-view="important" onclick="switchView('important')">
+                        <div class="nav-item-icon">⭐</div>
+                        <div class="nav-item-text">Importante</div>
+                        <div class="nav-item-count" id="importantCount">0</div>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Proyectos</div>
+                    <div id="projectsList">
+                        <!-- Los proyectos se cargarán dinámicamente -->
+                    </div>
+                    <div class="nav-item" onclick="showProjectModal()">
+                        <div class="nav-item-icon">➕</div>
+                        <div class="nav-item-text">Añadir proyecto</div>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Filtros</div>
+                    <div class="nav-item" data-view="all" onclick="switchView('all')">
+                        <div class="nav-item-icon">📋</div>
+                        <div class="nav-item-text">Todas las tareas</div>
+                        <div class="nav-item-count" id="allCount">0</div>
+                    </div>
+                    <div class="nav-item" data-view="completed" onclick="switchView('completed')">
+                        <div class="nav-item-icon">✅</div>
+                        <div class="nav-item-text">Completadas</div>
+                        <div class="nav-item-count" id="completedCount">0</div>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Etiquetas</div>
+                    <div id="labelsList">
+                        <!-- Las etiquetas se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">IA Settings</div>
+                    <div class="nav-item" onclick="showAIConfigModal()">
+                        <div class="nav-item-icon">⚙️</div>
+                        <div class="nav-item-text">Configurar IA</div>
+                    </div>
+                    <div class="nav-item" onclick="showAIStatsModal()">
+                        <div class="nav-item-icon">📊</div>
+                        <div class="nav-item-text">Estadísticas</div>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Gestión de Datos</div>
+                    <div class="nav-item" onclick="showDataManagementModal()">
+                        <div class="nav-item-icon">💾</div>
+                        <div class="nav-item-text">Importar/Exportar</div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="main-header">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                    <h1 class="main-title" id="mainTitle">Hoy</h1>
+                </div>
+                <div class="header-actions">
+                    <div class="scenario-selector">
+                        <select id="scenarioSelect" class="scenario-select" onchange="switchScenario(this.value)">
+                            <option value="default">🏠 Personal</option>
+                        </select>
+                        <button class="scenario-btn" onclick="showScenarioModal()" title="Gestionar Escenarios">
+                            ⚙️
+                        </button>
+                        <button class="scenario-btn" onclick="showNewScenarioModal()" title="Nuevo Escenario">
+                            ➕
+                        </button>
+                    </div>
+                    <button class="header-btn" onclick="toggleTaskForm()" id="toggleFormBtn">
+                        <span>📝</span>
+                        Mostrar formulario
+                    </button>
+                    <button class="header-btn" onclick="showTaskModal()">
+                        <span>➕</span>
+                        Añadir tarea
+                    </button>
+                </div>
+            </header>
+
+            <div class="tasks-container">
+                <div class="task-form" id="taskForm" style="display: none;">
+                    <div class="task-form-header">
+                        <h3 style="margin: 0; color: #202124; font-size: 18px;">Nueva tarea</h3>
+                        <button class="close-form-btn" onclick="toggleTaskForm()">×</button>
+                    </div>
+                    <form id="task-form">
+                        <div class="form-row">
+                            <input type="text" id="task-name" placeholder="Nombre de la tarea" required />
+                            <select id="task-priority">
+                                <option value="baja">Prioridad baja</option>
+                                <option value="media">Prioridad media</option>
+                                <option value="alta">Prioridad alta</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <textarea id="task-description" placeholder="Descripción (opcional)"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <select id="task-project">
+                                <option value="">Sin proyecto</option>
+                            </select>
+                            <input type="datetime-local" id="task-date" />
+                        </div>
+                        <!-- Botones rápidos de fecha -->
+                        <div class="quick-date-buttons">
+                            <button type="button" class="quick-date-btn" onclick="setQuickDate(1)">Mañana</button>
+                            <button type="button" class="quick-date-btn" onclick="setQuickDate(2)">Pasado mañana</button>
+                            <button type="button" class="quick-date-btn" onclick="setQuickDate(7)">En 1 semana</button>
+                            <button type="button" class="quick-date-btn" onclick="setQuickDate(15)">En 15 días</button>
+                            <button type="button" class="quick-date-btn" onclick="setQuickDate(30)">En 1 mes</button>
+                            <button type="button" class="quick-date-btn" onclick="setQuickDate(90)">En 3 meses</button>
+                            <button type="button" class="quick-date-btn" onclick="setQuickDate(180)">En 6 meses</button>
+                            <button type="button" class="quick-date-btn" onclick="setQuickDate(365)">En 1 año</button>
+                        </div>
+                        <div class="form-row">
+                            <div class="tags-input-container">
+                                <input type="text" id="task-tags" placeholder="Etiquetas (presiona Enter para agregar)" />
+                                <div class="tags-suggestions" id="tagsSuggestions"></div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <input type="text" id="task-subtasks" placeholder="Subtareas (presiona Enter para agregar)" />
+                        </div>
+                        <div id="selected-tags" style="margin-bottom: 12px;"></div>
+                        <div id="selected-subtasks" style="margin-bottom: 12px;"></div>
+                        <button type="submit" class="add-btn">Añadir tarea</button>
+                    </form>
+                </div>
+
+                <div class="tasks-list" id="tasksList">
+                    <!-- Las tareas se cargarán dinámicamente -->
+                </div>
+
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="empty-icon">📋</div>
+                    <div class="empty-title">Sin tareas</div>
+                    <div class="empty-description">¡Añade tu primera tarea para comenzar!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar tareas -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Detalles de la tarea</h2>
+                <button class="modal-close" onclick="hideTaskModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Título</label>
+                <input type="text" class="form-input" id="modalTaskTitle" placeholder="Nombre de la tarea">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-input form-textarea" id="modalTaskDescription" placeholder="Descripción de la tarea"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Proyecto</label>
+                <select class="form-select" id="modalTaskProject">
+                    <option value="">Sin proyecto</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fecha límite</label>
+                <input type="datetime-local" class="form-input" id="modalTaskDate">
+                <!-- Botones rápidos en modal -->
+                <div class="quick-date-buttons modal-quick-dates">
+                    <button type="button" class="quick-date-btn" onclick="setModalQuickDate(1)">Mañana</button>
+                    <button type="button" class="quick-date-btn" onclick="setModalQuickDate(2)">Pasado mañana</button>
+                    <button type="button" class="quick-date-btn" onclick="setModalQuickDate(7)">1 semana</button>
+                    <button type="button" class="quick-date-btn" onclick="setModalQuickDate(15)">15 días</button>
+                    <button type="button" class="quick-date-btn" onclick="setModalQuickDate(30)">1 mes</button>
+                    <button type="button" class="quick-date-btn" onclick="setModalQuickDate(90)">3 meses</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Prioridad</label>
+                <select class="form-select" id="modalTaskPriority">
+                    <option value="alta">Prioridad alta</option>
+                    <option value="media">Prioridad media</option>
+                    <option value="baja" selected>Prioridad baja</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Etiquetas</label>
+                <div class="tags-input-container">
+                    <input type="text" class="form-input" id="modalTaskLabels" placeholder="Añadir etiqueta y presionar Enter">
+                    <div class="tags-suggestions" id="modalTagsSuggestions"></div>
+                </div>
+                <div class="selected-labels" id="selectedLabels"></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Subtareas</label>
+                <div class="subtasks-editor">
+                    <div class="subtasks-list" id="modalSubtasksList"></div>
+                    <input type="text" class="form-input" id="newSubtaskInput" placeholder="Añadir subtarea y presionar Enter">
+                </div>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-primary" onclick="saveTask()" style="width: 100%;">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para proyectos -->
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="projectModalTitle">Nuevo proyecto</h2>
+                <button class="modal-close" onclick="hideProjectModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nombre del proyecto</label>
+                <input type="text" class="form-input" id="projectNameInput" placeholder="Mi proyecto">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Color</label>
+                <select class="form-select" id="projectColorInput">
+                    <option value="#db4035">🔴 Rojo</option>
+                    <option value="#ff9933">🟠 Naranja</option>
+                    <option value="#fad000">🟡 Amarillo</option>
+                    <option value="#299438">🟢 Verde</option>
+                    <option value="#6accbc">🔵 Azul claro</option>
+                    <option value="#158fad">🔷 Azul</option>
+                    <option value="#14aaf5">💙 Azul cielo</option>
+                    <option value="#96c3eb">🩵 Azul pastel</option>
+                    <option value="#884dff">🟣 Morado</option>
+                    <option value="#af38eb">🟪 Rosa</option>
+                </select>
+            </div>
+            <div class="form-group" style="display: flex; gap: 12px;">
+                <button class="btn btn-primary" onclick="saveProject()" style="flex: 1;">Guardar</button>
+                <button class="btn btn-danger" id="deleteProjectBtn" onclick="deleteProject()" style="display: none;">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración de IA -->
+    <div class="modal" id="aiConfigModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">⚙️ Configuración de IA</h2>
+                <button class="modal-close" onclick="hideAIConfigModal()">×</button>
+            </div>
+
+            <div class="warning-box" id="costWarning" style="display: none;">
+                <h4>⚠️ Advertencia de Costos</h4>
+                <p>El modelo GPT-4 es considerablemente más caro. Se recomienda usar GPT-3.5-turbo para reducir costos en un 90%.</p>
+            </div>
+
+            <div class="config-grid">
+                <div class="config-item full-width">
+                    <label class="form-label">🔑 API Key de OpenAI</label>
+                    <input type="password" class="form-input" id="aiApiKey" placeholder="sk-..." value="">
+                    <small style="color: #666; font-size: 12px;">Tu API key se guarda localmente y nunca se comparte</small>
+                </div>
+
+                <div class="config-item">
+                    <label class="form-label">🤖 Modelo de IA</label>
+                    <select class="form-select" id="aiModel">
+                        <option value="gpt-4.1-nano">GPT-4.1 nano (Recomendado)</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Económico)</option>
+                        <option value="gpt-4-turbo">GPT-4 Turbo (Balanceado)</option>
+                        <option value="gpt-4">GPT-4 (Más caro)</option>
+                    </select>
+                </div>
+
+                <div class="config-item">
+                    <label class="form-label">📏 Máx. tokens respuesta</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="maxTokens" min="100" max="4000" value="1000" step="100">
+                        <div class="slider-value" id="maxTokensValue">1000</div>
+                    </div>
+                </div>
+
+                <div class="config-item">
+                    <label class="form-label">🎯 Temperatura (creatividad)</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="temperature" min="0" max="2" value="0.7" step="0.1">
+                        <div class="slider-value" id="temperatureValue">0.7</div>
+                    </div>
+                </div>
+
+                <div class="config-item">
+                    <label class="form-label">💭 Límite historial mensajes</label>
+                    <div class="slider-container">
+                        <input type="range" class="slider" id="historyLimit" min="5" max="50" value="10" step="5">
+                        <div class="slider-value" id="historyLimitValue">10</div>
+                    </div>
+                </div>
+
+                <div class="config-item full-width">
+                    <div class="cost-indicator">
+                        <h4>💰 Costo estimado por consulta</h4>
+                        <div class="cost-value" id="costEstimate">~$0.01</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="saveAIConfig()" style="width: 100%;">Guardar Configuración</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Estadísticas de IA -->
+    <div class="modal" id="aiStatsModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 class="modal-title">📊 Estadísticas de Uso de IA</h2>
+                <button class="modal-close" onclick="hideAIStatsModal()">×</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stats-card">
+                    <h4>Consultas Hoy</h4>
+                    <div class="stats-value" id="todayQueries">0</div>
+                </div>
+                <div class="stats-card">
+                    <h4>Tokens Usados</h4>
+                    <div class="stats-value" id="tokensUsed">0</div>
+                </div>
+                <div class="stats-card">
+                    <h4>Costo Estimado</h4>
+                    <div class="stats-value" id="estimatedCost">$0.00</div>
+                </div>
+                <div class="stats-card">
+                    <h4>Modelo Actual</h4>
+                    <div class="stats-value" id="currentModel">GPT-4.1 nano</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <h3 style="margin-bottom: 12px;">📈 Historial de Uso</h3>
+                <div style="background: #f8f9fa; border-radius: 6px; padding: 16px; max-height: 200px; overflow-y: auto;">
+                    <div id="usageHistory">
+                        <!-- El historial se cargará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="display: flex; gap: 12px;">
+                <button class="btn btn-secondary" onclick="exportStats()" style="flex: 1;">📤 Exportar</button>
+                <button class="btn btn-secondary" onclick="clearStats()" style="flex: 1;">🗑️ Limpiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Gestión de Escenarios -->
+    <div class="modal" id="scenarioModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🎭 Gestión de Escenarios</h2>
+                <button class="modal-close" onclick="hideScenarioModal()">×</button>
+            </div>
+            
+            <div class="form-group">
+                <h3 style="margin-bottom: 12px;">📋 Escenarios Existentes</h3>
+                <div id="scenariosList" class="scenarios-list">
+                    <!-- Los escenarios se cargarán dinámicamente -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <h3 style="margin-bottom: 12px;">📊 Información del Escenario Actual</h3>
+                <div class="scenario-info-card">
+                    <div class="scenario-info-item">
+                        <strong>Nombre:</strong> <span id="currentScenarioName">Personal</span>
+                    </div>
+                    <div class="scenario-info-item">
+                        <strong>Tareas:</strong> <span id="currentScenarioTasks">0</span>
+                    </div>
+                    <div class="scenario-info-item">
+                        <strong>Proyectos:</strong> <span id="currentScenarioProjects">0</span>
+                    </div>
+                    <div class="scenario-info-item">
+                        <strong>Creado:</strong> <span id="currentScenarioCreated">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h4>⚠️ Importante</h4>
+                <p>Cada escenario mantiene sus datos completamente separados. Al cambiar de escenario se guardan automáticamente los datos del escenario actual.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Nuevo/Editar Escenario -->
+    <div class="modal" id="newScenarioModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="scenarioModalTitle">➕ Nuevo Escenario</h2>
+                <button class="modal-close" onclick="hideNewScenarioModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">🏷️ Nombre del Escenario</label>
+                <input type="text" class="form-input" id="scenarioNameInput" placeholder="ej: Trabajo, Familia, Estudios">
+            </div>
+            <div class="form-group">
+                <label class="form-label">🎨 Icono</label>
+                <select class="form-select" id="scenarioIconInput">
+                    <option value="🏠">🏠 Personal</option>
+                    <option value="🏢">🏢 Trabajo</option>
+                    <option value="👨‍👩‍👧‍👦">👨‍👩‍👧‍👦 Familia</option>
+                    <option value="📚">📚 Estudios</option>
+                    <option value="💼">💼 Freelance</option>
+                    <option value="🎯">🎯 Objetivos</option>
+                    <option value="🏋️‍♀️">🏋️‍♀️ Fitness</option>
+                    <option value="✈️">✈️ Viajes</option>
+                    <option value="🎨">🎨 Creatividad</option>
+                    <option value="💰">💰 Finanzas</option>
+                    <option value="🏠">🏠 Hogar</option>
+                    <option value="🎮">🎮 Hobbies</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">📝 Descripción (Opcional)</label>
+                <textarea class="form-input form-textarea" id="scenarioDescriptionInput" placeholder="Describe el propósito de este escenario"></textarea>
+            </div>
+            <div class="form-group" style="display: flex; gap: 12px;">
+                <button class="btn btn-primary" onclick="saveScenario()" style="flex: 1;">Guardar</button>
+                <button class="btn btn-danger" id="deleteScenarioBtn" onclick="deleteScenario()" style="display: none;">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Gestión de Datos -->
+    <div class="modal" id="dataManagementModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">💾 Gestión de Datos</h2>
+                <button class="modal-close" onclick="hideDataManagementModal()">×</button>
+            </div>
+
+            <div class="form-group">
+                <h3 style="margin-bottom: 12px;">📤 Exportar Datos</h3>
+                <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+                    Exporta todas tus tareas, proyectos y configuración para hacer respaldo o transferir a otro dispositivo.
+                </p>
+                <div class="data-actions">
+                    <button class="btn btn-primary" onclick="exportAllData()">
+                        📤 Exportar Todo
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportTasks()">
+                        📋 Solo Tareas
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportProjects()">
+                        📁 Solo Proyectos
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <h3 style="margin-bottom: 12px;">📥 Importar Datos</h3>
+                <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+                    Importa datos previamente exportados. <strong>Advertencia:</strong> Esto reemplazará todos los datos actuales.
+                </p>
+                <input type="file" id="importFileInput" accept=".json" style="margin-bottom: 16px;" />
+                <div class="data-actions">
+                    <button class="btn btn-primary" onclick="importData()">
+                        📥 Importar Datos
+                    </button>
+                    <button class="btn btn-danger" onclick="clearAllData()">
+                        🗑️ Limpiar Todo
+                    </button>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h4>⚠️ Importante</h4>
+                <p>Siempre haz una copia de seguridad antes de importar datos o limpiar. Los datos eliminados no se pueden recuperar.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat del asistente -->
+    <div id="chat-container">
+        <div class="chat-header">
+            🤖 Asistente de Tareas
+            <button class="chat-minimize-btn" onclick="toggleChat()" id="chatMinimizeBtn">−</button>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input-area">
+            <input type="text" class="chat-input" id="chat-input" placeholder="Escribe tu mensaje..." onkeypress="if(event.key==='Enter') enviarMensaje()">
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
