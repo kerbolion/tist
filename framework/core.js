@@ -73,6 +73,16 @@ class ModularFramework {
             version: '3.0.0',
             load: () => this.loadTasksModule()
         });
+
+        // Registro del módulo de notas (se cargará dinámicamente)
+        this.registerModule({
+            id: 'notes',
+            name: 'Notes',
+            icon: '📝',
+            description: 'Gestión de notas y apuntes',
+            version: '1.0.0',
+            load: () => this.loadNotesModule()
+        });
     }
 
     async loadTasksModule() {
@@ -95,8 +105,35 @@ class ModularFramework {
         }
     }
 
+    async loadNotesModule() {
+        try {
+            // Cargar CSS del módulo
+            await this.loadModuleCSS('modules/notes/notes.css');
+            
+            // Cargar JS del módulo
+            await this.loadModuleJS('modules/notes/notes.js');
+            
+            // Inicializar el módulo
+            if (window.NotesModule) {
+                return new window.NotesModule(this);
+            } else {
+                throw new Error('Módulo de notas no encontrado');
+            }
+        } catch (error) {
+            console.error('Error cargando módulo de notas:', error);
+            throw error;
+        }
+    }
+
     async loadModuleCSS(cssPath) {
         return new Promise((resolve, reject) => {
+            // Verificar si el CSS ya está cargado
+            const existingLink = document.querySelector(`link[href="${cssPath}"]`);
+            if (existingLink) {
+                resolve();
+                return;
+            }
+
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = cssPath;
@@ -108,6 +145,13 @@ class ModularFramework {
 
     async loadModuleJS(jsPath) {
         return new Promise((resolve, reject) => {
+            // Verificar si el script ya está cargado
+            const existingScript = document.querySelector(`script[src="${jsPath}"]`);
+            if (existingScript) {
+                resolve();
+                return;
+            }
+
             const script = document.createElement('script');
             script.src = jsPath;
             script.onload = resolve;
@@ -320,10 +364,26 @@ class ModularFramework {
 
     // ===== GESTIÓN DE DATOS GLOBAL =====
     exportAllData() {
+        // Recopilar datos de todos los módulos
+        const allModulesData = {};
+        
+        // Obtener datos de cada módulo registrado
+        Object.keys(this.data.modules).forEach(moduleId => {
+            allModulesData[moduleId] = this.data.modules[moduleId];
+        });
+
         const exportData = {
-            ...this.data,
+            // Datos del framework
+            framework: {
+                currentModule: this.data.currentModule,
+                globalConfig: this.data.globalConfig
+            },
+            // Datos de todos los módulos
+            modules: allModulesData,
+            // Metadatos de exportación
             exportDate: new Date().toISOString(),
-            frameworkVersion: '1.0.0'
+            frameworkVersion: '1.0.0',
+            exportType: 'complete-system'
         };
 
         const dataStr = JSON.stringify(exportData, null, 2);
@@ -331,10 +391,10 @@ class ModularFramework {
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `framework-backup-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `sistema-completo-backup-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
 
-        this.showMessage('📤 Datos exportados correctamente');
+        this.showMessage('📤 Sistema completo exportado correctamente (todos los módulos)');
     }
 
     exportCurrentSpace() {
@@ -378,22 +438,36 @@ class ModularFramework {
             try {
                 const importedData = JSON.parse(e.target.result);
                 
-                if (!confirm('⚠️ ¿Estás seguro? Esto puede reemplazar datos existentes.')) {
+                if (!confirm('⚠️ ¿Estás seguro? Esto reemplazará TODOS los datos del sistema (todos los módulos).')) {
                     return;
                 }
 
-                // Importar datos según el tipo
-                if (importedData.frameworkVersion) {
-                    // Importación completa del framework
+                // Verificar si es una exportación completa del sistema
+                if (importedData.exportType === 'complete-system' && importedData.frameworkVersion) {
+                    // Importación completa del sistema
+                    this.data = {
+                        currentModule: importedData.framework.currentModule,
+                        globalConfig: importedData.framework.globalConfig,
+                        modules: importedData.modules
+                    };
+                    
+                    this.saveGlobalData();
+                    this.showMessage('✅ Sistema completo importado correctamente');
+                    setTimeout(() => location.reload(), 1500);
+                    
+                } else if (importedData.frameworkVersion) {
+                    // Importación de formato anterior (compatibilidad)
                     this.data = { ...this.data, ...importedData };
                     this.saveGlobalData();
                     this.showMessage('✅ Datos del framework importados');
                     setTimeout(() => location.reload(), 1000);
+                    
                 } else if (importedData.module) {
                     // Importación de módulo específico
                     this.data.modules[importedData.module] = importedData.data;
                     this.saveGlobalData();
                     this.showMessage(`✅ Datos de ${importedData.moduleName} importados`);
+                    
                 } else {
                     this.showMessage('❌ Formato de archivo no válido');
                 }
@@ -416,9 +490,47 @@ class ModularFramework {
             return;
         }
 
+        // Descargar módulo actual antes de limpiar
+        if (this.currentModule) {
+            this.unloadCurrentModule();
+        }
+
+        // Limpiar localStorage completamente
         localStorage.clear();
-        this.showMessage('🗑️ Todos los datos han sido eliminados');
-        setTimeout(() => location.reload(), 1000);
+        
+        // Reinicializar datos del framework
+        this.data = {
+            currentModule: null,
+            globalConfig: {
+                theme: 'light',
+                language: 'es'
+            },
+            modules: {}
+        };
+        
+        // Resetear estado del framework
+        this.currentModule = null;
+        
+        // Actualizar interfaz
+        this.updateModulesInterface();
+        this.updateSpaceSelector();
+        this.updateMainTitle('Framework Modular');
+        
+        // Limpiar contenedor principal
+        const container = document.getElementById('moduleContainer');
+        container.innerHTML = `
+            <div class="welcome-state">
+                <div class="welcome-icon">🚀</div>
+                <div class="welcome-title">¡Bienvenido al Framework Modular!</div>
+                <div class="welcome-description">Selecciona un espacio de trabajo para comenzar</div>
+            </div>
+        `;
+        
+        // Limpiar navegación y acciones del módulo
+        document.getElementById('moduleNavigation').innerHTML = '';
+        document.getElementById('moduleActions').innerHTML = '';
+        
+        this.showMessage('🗑️ Todos los datos han sido eliminados correctamente');
     }
 
     // ===== UTILIDADES =====
@@ -506,12 +618,21 @@ function saveGlobalConfig() {
     hideGlobalConfigModal();
 }
 
+function showGlobalDataManagementModal() {
+    document.getElementById('globalDataManagementModal').classList.add('active');
+}
+
+function hideGlobalDataManagementModal() {
+    document.getElementById('globalDataManagementModal').classList.remove('active');
+}
+
+// Mantener las funciones originales para compatibilidad (pero apuntando a las globales)
 function showDataManagementModal() {
-    document.getElementById('dataManagementModal').classList.add('active');
+    showGlobalDataManagementModal();
 }
 
 function hideDataManagementModal() {
-    document.getElementById('dataManagementModal').classList.remove('active');
+    hideGlobalDataManagementModal();
 }
 
 function exportAllData() {
@@ -647,6 +768,42 @@ const additionalStyles = `
 .theme-dark .main-header {
     background: #2d2d2d;
     border-color: #404040;
+}
+
+.welcome-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 60px 40px;
+    color: #666;
+}
+
+.welcome-icon {
+    font-size: 64px;
+    margin-bottom: 24px;
+    opacity: 0.8;
+}
+
+.welcome-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #202124;
+    margin-bottom: 12px;
+}
+
+.welcome-description {
+    font-size: 16px;
+    color: #666;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 `;
 

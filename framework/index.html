@@ -46,7 +46,7 @@
                         <div class="nav-item-icon">⚙️</div>
                         <div class="nav-item-text">Configuración Global</div>
                     </div>
-                    <div class="nav-item" onclick="showDataManagementModal()">
+                    <div class="nav-item" onclick="showGlobalDataManagementModal()">
                         <div class="nav-item-icon">💾</div>
                         <div class="nav-item-text">Gestión de Datos</div>
                     </div>
@@ -120,47 +120,59 @@
     </div>
 
     <!-- Modal de Gestión de Datos Global -->
-    <div class="modal" id="dataManagementModal">
-        <div class="modal-content" style="max-width: 600px;">
+    <div class="modal" id="globalDataManagementModal">
+        <div class="modal-content" style="max-width: 650px;">
             <div class="modal-header">
-                <h2 class="modal-title">💾 Gestión de Datos Global</h2>
-                <button class="modal-close" onclick="hideDataManagementModal()">×</button>
+                <h2 class="modal-title">💾 Gestión de Datos del Sistema Completo</h2>
+                <button class="modal-close" onclick="hideGlobalDataManagementModal()">×</button>
+            </div>
+
+            <div class="system-info-box" style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 6px; padding: 16px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 8px 0; color: #1976d2;">🌐 Gestión Global del Framework</h4>
+                <p style="margin: 0; font-size: 14px; color: #1565c0;">
+                    Esta sección gestiona <strong>TODOS los módulos</strong> del sistema: Tasks, Notes y cualquier otro módulo instalado.
+                </p>
             </div>
 
             <div class="form-group">
-                <h3 style="margin-bottom: 12px;">📤 Exportar Datos</h3>
+                <h3 style="margin-bottom: 12px;">📤 Exportar Sistema Completo</h3>
                 <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
-                    Exporta todos los datos de todos los espacios de trabajo.
+                    Exporta <strong>todos los datos de todos los módulos</strong> (Tasks + Notes + configuración global) en un solo archivo.
                 </p>
                 <div class="data-actions">
-                    <button class="btn btn-primary" onclick="exportAllData()">
-                        📤 Exportar Todo
+                    <button class="btn btn-primary" onclick="exportAllData()" style="background: #4caf50;">
+                        📦 Exportar Sistema Completo
                     </button>
                     <button class="btn btn-secondary" onclick="exportCurrentSpace()">
-                        📋 Solo Espacio Actual
+                        📋 Solo Módulo Actual
                     </button>
                 </div>
             </div>
 
             <div class="form-group">
-                <h3 style="margin-bottom: 12px;">📥 Importar Datos</h3>
+                <h3 style="margin-bottom: 12px;">📥 Importar Sistema Completo</h3>
                 <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
-                    Importa datos previamente exportados. <strong>Advertencia:</strong> Esto puede reemplazar datos existentes.
+                    Importa un backup completo del sistema. <strong>⚠️ Advertencia:</strong> Esto reemplazará <strong>TODOS los datos de TODOS los módulos</strong>.
                 </p>
                 <input type="file" id="importFileInput" accept=".json" style="margin-bottom: 16px;" />
                 <div class="data-actions">
-                    <button class="btn btn-primary" onclick="importData()">
-                        📥 Importar Datos
+                    <button class="btn btn-primary" onclick="importData()" style="background: #ff9800;">
+                        📥 Importar Sistema Completo
                     </button>
                     <button class="btn btn-danger" onclick="clearAllData()">
-                        🗑️ Limpiar Todo
+                        🗑️ Eliminar Todo el Sistema
                     </button>
                 </div>
             </div>
 
-            <div class="warning-box">
-                <h4>⚠️ Importante</h4>
-                <p>Los datos se organizan por espacios de trabajo. Cada espacio mantiene sus datos independientes.</p>
+            <div class="warning-box" style="background: #fff3e0; border: 1px solid #ff9800;">
+                <h4 style="color: #f57c00;">⚠️ Diferencias Importantes</h4>
+                <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 14px; color: #ef6c00;">
+                    <li><strong>Gestión Global:</strong> Maneja TODOS los módulos (Tasks + Notes + otros)</li>
+                    <li><strong>Gestión Individual:</strong> Cada módulo tiene su propia gestión de datos</li>
+                    <li><strong>Backup Completo:</strong> Usa esta opción para respaldar todo el sistema</li>
+                    <li><strong>Backup Específico:</strong> Usa la gestión individual de cada módulo</li>
+                </ul>
             </div>
         </div>
     </div>
